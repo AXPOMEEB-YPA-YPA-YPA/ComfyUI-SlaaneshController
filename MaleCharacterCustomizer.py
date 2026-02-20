@@ -110,6 +110,7 @@ class SlaaneshMaleCharacterCustomizer:
         required = {
             "总开关": ("BOOLEAN", {"default": True, "label_on": "节点开启", "label_off": "节点关闭", "display": "toggle"}),
             "模式选择": (["🔒 手动指定", "🎲 部分随机(手动优先)", "🔓 完全随机"], {"default": "🎲 部分随机(手动优先)"}),
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF, "step": 1}),
         }
         
         # 动态生成 UI 列表 (应用 register_opt)
@@ -129,8 +130,8 @@ class SlaaneshMaleCharacterCustomizer:
     @classmethod
     def IS_CHANGED(cls, **kwargs):
         # 只要不是纯手动模式，就强制刷新
-        if kwargs.get("模式选择") != "🔒 手动指定":
-            return random.random()
+        if kwargs.get("总开关") and kwargs.get("模式选择") != "🔒 手动指定":
+            return int(kwargs.get("seed", 0))
         return False
 
     def generate_prompt(self, **kwargs):
@@ -138,6 +139,8 @@ class SlaaneshMaleCharacterCustomizer:
             return ("", "")
 
         mode = kwargs.get("模式选择")
+        seed = int(kwargs.get("seed", 0))
+        rng = random.Random(seed)
         pos_parts = []
         neg_parts = []
 
@@ -162,10 +165,10 @@ class SlaaneshMaleCharacterCustomizer:
             final_tag_raw = ""
 
             # --- 逻辑分支 ---
-            if mode == "💀 完全随机":
+            if mode == "🔓 完全随机":
                 # 如果是完全随机，且该项允许随机(prob > 0)，则强制从非默认选项中选一个
                 if prob > 0:
-                    final_tag_raw = random.choice(data_list[1:])
+                    final_tag_raw = rng.choice(data_list[1:])
                 else:
                     # 像“人数”这种 prob 为 0 的，依然遵循手动选择
                     final_tag_raw = manual_val_full
@@ -173,8 +176,8 @@ class SlaaneshMaleCharacterCustomizer:
             elif mode == "🎲 部分随机(手动优先)":
                 if is_manually_set:
                     final_tag_raw = manual_val_full
-                elif prob > 0 and random.random() < prob:
-                    final_tag_raw = random.choice(data_list[1:])
+                elif prob > 0 and rng.random() < prob:
+                    final_tag_raw = rng.choice(data_list[1:])
 
             else: # 🔒 手动指定
                 final_tag_raw = manual_val_full

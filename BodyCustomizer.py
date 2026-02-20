@@ -444,6 +444,7 @@ class SlaaneshBodyCustomizer:
             "总开关": ("BOOLEAN", {"default": True, "label_on": "节点开启", "label_off": "节点关闭", "display": "toggle"}), 
             "18x模式": ("BOOLEAN", {"default": True, "label_on": "开启", "label_off": "关闭", "display": "toggle"}),
             "模式选择": (["🔒 手动指定", "🎲 部分随机(手动优先)", "🔓 完全随机"], {"default": "🎲 部分随机(手动优先)"}),
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF, "step": 1}),
             "出图模式": (["头像 (Portrait)", "上半身 (Upper Body)", "胸像 (Breast Focus)", "中景 (Cowboy Shot)", "下半身 (Lower Body)", "全身 (Full Body)"], {"default": "全身 (Full Body)"}),
         }
 
@@ -469,8 +470,8 @@ class SlaaneshBodyCustomizer:
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
-        if kwargs.get("总开关") or kwargs.get("模式选择") != "🔒 手动指定":
-            return float("nan") 
+        if kwargs.get("总开关") and kwargs.get("模式选择") != "🔒 手动指定":
+            return int(kwargs.get("seed", 0))
         return False
 
     def process_body(self, **kwargs):
@@ -484,6 +485,8 @@ class SlaaneshBodyCustomizer:
         eye_parts = []  # [新增] 用于存储眼睛相关的提示词
         
         mode = kwargs.get("模式选择", "🔒 手动指定")
+        seed = int(kwargs.get("seed", 0))
+        rng = random.Random(seed)
         shot_mode = kwargs.get("出图模式", "全身 (Full Body)")
         enable_18x = kwargs.get("18x模式", True)
         
@@ -564,8 +567,8 @@ class SlaaneshBodyCustomizer:
                 if mode == "🔒 手动指定" or (mode == "🎲 部分随机(手动优先)" and is_manual):
                     raw_item_text = item_manual_choice
                 elif mode != "🔒 手动指定" and not is_manual:
-                    if random.random() < item_prob and len(item_data_list) > 1:
-                        raw_item_text = random.choice(item_data_list[1:])
+                    if rng.random() < item_prob and len(item_data_list) > 1:
+                        raw_item_text = rng.choice(item_data_list[1:])
             
             raw_color_text = ""
             if color_en_key:
@@ -575,8 +578,8 @@ class SlaaneshBodyCustomizer:
                 
                 if mode == "🔒 手动指定" or (mode == "🎲 部分随机(手动优先)" and color_manual_choice != "(不指定)"):
                     raw_color_text = color_manual_choice
-                elif mode != "🔒 手动指定" and (raw_item_text or item_en_key == "eyes") and random.random() < color_prob:
-                    raw_color_text = random.choice(color_data_list[1:])
+                elif mode != "🔒 手动指定" and (raw_item_text or item_en_key == "eyes") and rng.random() < color_prob:
+                    raw_color_text = rng.choice(color_data_list[1:])
 
             p_item = extract_tag(raw_item_text, "pos")
             p_color = extract_tag(raw_color_text, "pos")

@@ -454,6 +454,7 @@ class SlaaneshCostumeCustomizer:
         required_inputs = {
             "总开关": ("BOOLEAN", {"default": True, "label_on": "节点开启", "label_off": "节点关闭", "display": "toggle"}), 
             "模式选择": (["🔒 手动指定", "🎲 部分随机(手动优先)", "🔓 完全随机"], {"default": "🎲 部分随机(手动优先)"}),
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF, "step": 1}),
             "出图模式": (["头像 (Portrait)", "上半身 (Upper Body)", "胸像 (Breast Focus)", "中景 (Cowboy Shot)", "下半身 (Lower Body)", "全身 (Full Body)"], {"default": "全身 (Full Body)"}),
             "服装模式": (["G1: 全裸 (Nude)", "G2: 套装 (Uniform)", "G3: Cosplay (角色扮演)", "G4: 连衣裙 (Dress)", "G5: 上下混搭 (Mix & Match)", "G6: 内衣 (Lingerie)"], {"default": "G1: 全裸 (Nude)"}),
         }
@@ -514,8 +515,8 @@ class SlaaneshCostumeCustomizer:
 
     @classmethod
     def IS_CHANGED(s, **kwargs):
-        if kwargs.get("总开关") or kwargs.get("模式选择") != "🔒 手动指定":
-            return float("nan") 
+        if kwargs.get("总开关") and kwargs.get("模式选择") != "🔒 手动指定":
+            return int(kwargs.get("seed", 0))
         return False
 
     def process_costume(self, **kwargs):
@@ -541,6 +542,8 @@ class SlaaneshCostumeCustomizer:
         pos_parts = []
         neg_parts = []
         mode = kwargs.get("模式选择", "🔒 手动指定")
+        seed = int(kwargs.get("seed", 0))
+        rng = random.Random(seed)
         
         shot_mode = kwargs.get("出图模式", "全身 (Full Body)")
         framing_input = kwargs.get("构图提示词_Link", "")
@@ -581,7 +584,7 @@ class SlaaneshCostumeCustomizer:
                     break
         elif mode != "🔒 手动指定":
             random_keys = [k for k in CLOTHING_MODES_CONFIG.keys() if k != "G1_Nude"]
-            active_group_key = random.choice(random_keys)
+            active_group_key = rng.choice(random_keys)
 
         is_nude = (active_group_key == "G1_Nude")
         if is_nude: pos_parts.append("completely nude")
@@ -607,7 +610,7 @@ class SlaaneshCostumeCustomizer:
                     item_pool = FEMALE_CHARACTER_DATA.get(item_en_key, ["(不指定)"])
                     valid_items = [x for x in item_pool if x != "(不指定)"]
                     if valid_items:
-                        raw_text = random.choice(valid_items)
+                        raw_text = rng.choice(valid_items)
                 else:
                     raw_text = item_manual
 
@@ -628,7 +631,7 @@ class SlaaneshCostumeCustomizer:
                             color_pool = CONSOLIDATED_DATA.get(color_data_source, ["(不指定)"])
                             valid_colors = [x for x in color_pool if x != "(不指定)"]
                             if valid_colors:
-                                raw_color = random.choice(valid_colors)
+                                raw_color = rng.choice(valid_colors)
                     else:
                         raw_color = color_manual
 
@@ -685,12 +688,12 @@ class SlaaneshCostumeCustomizer:
                     raw_text = item_manual
                 else:
                     if matched_pool: 
-                        raw_text = random.choice(matched_pool)
+                        raw_text = rng.choice(matched_pool)
                     else:
                         item_pool = FEMALE_CHARACTER_DATA.get("holding", ["(不指定)"])
                         valid_items = [x for x in item_pool if x != "(不指定)"]
                         if valid_items: 
-                            raw_text = random.choice(valid_items)
+                            raw_text = rng.choice(valid_items)
                 
                 p = extract_tag(raw_text, "pos")
                 n = extract_tag(raw_text, "neg")
@@ -705,7 +708,7 @@ class SlaaneshCostumeCustomizer:
                 item_pool = FEMALE_CHARACTER_DATA.get(item_en_key, ["(不指定)"])
                 valid_items = [x for x in item_pool if x != "(不指定)"]
                 if valid_items:
-                    raw_text = random.choice(valid_items)
+                    raw_text = rng.choice(valid_items)
 
             raw_color = ""
             if color_en_key:
@@ -718,7 +721,7 @@ class SlaaneshCostumeCustomizer:
                     color_pool = CONSOLIDATED_DATA.get(color_data_source, ["(不指定)"])
                     valid_colors = [x for x in color_pool if x != "(不指定)"]
                     if valid_colors:
-                        raw_color = random.choice(valid_colors)
+                        raw_color = rng.choice(valid_colors)
 
             p_item = extract_tag(raw_text, "pos")
             p_color = extract_tag(raw_color, "pos")

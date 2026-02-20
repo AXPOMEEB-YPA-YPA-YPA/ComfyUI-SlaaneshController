@@ -1106,6 +1106,7 @@ class SlaaneshSoloSexControl:
             "required": {
                 "总开关": ("BOOLEAN", {"default": True, "label_on": "节点开启", "label_off": "节点关闭", "display": "toggle"}), 
                 "模式选择": (["🔒 手动指定", "🎲 部分随机(手动优先)", "🔓 完全随机"], {"default": "🎲 部分随机(手动优先)"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF, "step": 1}),
                 "玩法选择(必选)": (UI_GROUPS, {"default": UI_GROUPS[0] if UI_GROUPS else ""}),
                 
                 # --- 级联菜单 ---
@@ -1143,7 +1144,7 @@ class SlaaneshSoloSexControl:
     @classmethod
     def IS_CHANGED(s, **kwargs):
         if kwargs.get("总开关") and kwargs.get("模式选择") != "🔒 手动指定":
-            return float("nan")
+            return int(kwargs.get("seed", 0))
         return False
     
 # ==============================================================================
@@ -1164,6 +1165,8 @@ class SlaaneshSoloSexControl:
         if not kwargs.get("总开关", True): return ("", "", "")
 
         mode = kwargs.get("模式选择")
+        seed = int(kwargs.get("seed", 0))
+        rng = random.Random(seed)
         # [关键修复] 获取参数名必须与 INPUT_TYPES 中定义的完全一致
         selected_group_name = kwargs.get("玩法选择(必选)")
         final_pos_list = []
@@ -1199,9 +1202,9 @@ class SlaaneshSoloSexControl:
             if is_manual_pose_valid: selected_pose_key = manual_pose_full # 赋值完整 Key
         elif mode == "🎲 部分随机(手动优先)":
             if is_manual_pose_valid: selected_pose_key = manual_pose_full
-            else: selected_pose_key = random.choice(list(poses_pool.keys()))
+            else: selected_pose_key = rng.choice(list(poses_pool.keys()))
         else: # "💀 完全随机"
-            selected_pose_key = random.choice(list(poses_pool.keys()))
+            selected_pose_key = rng.choice(list(poses_pool.keys()))
 
         if not selected_pose_key:
             return ("", "", "")
@@ -1228,9 +1231,9 @@ class SlaaneshSoloSexControl:
                 if is_manual_view_valid: selected_view_key = manual_view_full
             elif mode == "🎲 部分随机(手动优先)":
                 if is_manual_view_valid: selected_view_key = manual_view_full
-                elif views_pool: selected_view_key = random.choice(list(views_pool.keys()))
+                elif views_pool: selected_view_key = rng.choice(list(views_pool.keys()))
             else:
-                if views_pool: selected_view_key = random.choice(list(views_pool.keys()))
+                if views_pool: selected_view_key = rng.choice(list(views_pool.keys()))
 
         view_node = None
         if selected_view_key:
@@ -1264,12 +1267,12 @@ class SlaaneshSoloSexControl:
                 if is_hand_valid: final_hand_str = manual_hand_full # 【修改】使用完整字符串
             elif mode == "🎲 部分随机(手动优先)":
                 if is_hand_valid: final_hand_str = manual_hand_full
-                elif allowed_hands_keys and random.random() < 1: 
-                    k = random.choice(allowed_hands_keys)
+                elif allowed_hands_keys and rng.random() < 1: 
+                    k = rng.choice(allowed_hands_keys)
                     final_hand_str = COMMON_TAGS[k]
             else: 
-                if allowed_hands_keys and random.random() < 1:
-                    k = random.choice(allowed_hands_keys)
+                if allowed_hands_keys and rng.random() < 1:
+                    k = rng.choice(allowed_hands_keys)
                     final_hand_str = COMMON_TAGS[k]
             
             p, n = parse_tag(final_hand_str)
@@ -1301,12 +1304,12 @@ class SlaaneshSoloSexControl:
                     if is_leg_valid: final_leg_str = manual_leg_full 
                 elif mode == "🎲 部分随机(手动优先)":
                     if is_leg_valid: final_leg_str = manual_leg_full # [修复] 使用 _full 变量
-                    elif allowed_legs_keys and random.random() < 1:
-                        k = random.choice(allowed_legs_keys)
+                    elif allowed_legs_keys and rng.random() < 1:
+                        k = rng.choice(allowed_legs_keys)
                         final_leg_str = COMMON_TAGS[k]
                 else:
-                    if allowed_legs_keys and random.random() < 1:
-                        k = random.choice(allowed_legs_keys)
+                    if allowed_legs_keys and rng.random() < 1:
+                        k = rng.choice(allowed_legs_keys)
                         final_leg_str = COMMON_TAGS[k]
 
                 p, n = parse_tag(final_leg_str)
@@ -1361,10 +1364,10 @@ class SlaaneshSoloSexControl:
                 # 4. 检查屏蔽词
                 if not (forbidden and any(w in current_pos_str for w in forbidden)):
                     # 5. 随机触发
-                    if random.random() < prob and pool:
+                    if rng.random() < prob and pool:
                         keys = list(pool.keys())
                         if keys: # 确保有 Key 可选
-                            rand_key = random.choice(keys)
+                            rand_key = rng.choice(keys)
                             found_val = pool[rand_key]
 
             # 统一处理找到的提示词

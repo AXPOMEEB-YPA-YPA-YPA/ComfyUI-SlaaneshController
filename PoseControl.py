@@ -317,6 +317,7 @@ class SlaaneshPoseControl:
         required_inputs = {
             "总开关": ("BOOLEAN", {"default": True, "label_on": "节点开启", "label_off": "节点关闭", "display": "toggle"}), 
             "模式选择": (["🔒 手动指定", "🎲 部分随机(手动优先)", "🔓 完全随机"], {"default": "🎲 部分随机(手动优先)"}),
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF, "step": 1}),
         }
         
         # --- 动态加载 UI (应用 register_opt) ---
@@ -364,13 +365,15 @@ class SlaaneshPoseControl:
     @classmethod
     def IS_CHANGED(s, **kwargs):
         if kwargs.get("总开关") and kwargs.get("模式选择") != "🔒 手动指定":
-            return random.random()
+            return int(kwargs.get("seed", 0))
         return False
 
     def slaaneshpose(self, **kwargs):
         if not kwargs.get("总开关", False): return ("", "", "") 
 
         mode = kwargs["模式选择"]
+        seed = int(kwargs.get("seed", 0))
+        rng = random.Random(seed)
         
         def extract(text, target="pos"):
             if not text or "(不指定)" in text: return ""
@@ -414,17 +417,17 @@ class SlaaneshPoseControl:
             elif base_choice != "(不指定)":
                 final_main_pose = base_choice
             else:
-                if random.random() < 0.5:
-                    final_main_pose = random.choice(POSE_DATA["group1_suit"][1:])
+                if rng.random() < 0.5:
+                    final_main_pose = rng.choice(POSE_DATA["group1_suit"][1:])
                     lock_legs = True
                 else:
-                    final_main_pose = random.choice(POSE_DATA["group0_basic"][1:])
+                    final_main_pose = rng.choice(POSE_DATA["group0_basic"][1:])
         else: # 完全随机
-            if random.random() < 0.5:
-                final_main_pose = random.choice(POSE_DATA["group1_suit"][1:])
+            if rng.random() < 0.5:
+                final_main_pose = rng.choice(POSE_DATA["group1_suit"][1:])
                 lock_legs = True
             else:
-                final_main_pose = random.choice(POSE_DATA["group0_basic"][1:])
+                final_main_pose = rng.choice(POSE_DATA["group0_basic"][1:])
         
         if final_main_pose and final_main_pose != "(不指定)":
             p = extract(final_main_pose, "pos")
@@ -445,8 +448,8 @@ class SlaaneshPoseControl:
             selected_h1 = h1_choice
         elif mode == "🎲 部分随机(手动优先)" and h1_choice != "(不指定)":
             selected_h1 = h1_choice
-        elif random.random() < 0.8:
-            selected_h1 = random.choice(POSE_DATA["hands1"][1:])
+        elif rng.random() < 0.8:
+            selected_h1 = rng.choice(POSE_DATA["hands1"][1:])
         
         if selected_h1 and selected_h1 != "(不指定)":
             p = extract(selected_h1, "pos")
@@ -498,8 +501,8 @@ class SlaaneshPoseControl:
                 selected_tag = choice
             elif mode == "🎲 部分随机(手动优先)" and choice != "(不指定)":
                 selected_tag = choice
-            elif random.random() < 0.8:
-                selected_tag = random.choice(POSE_DATA[d_key][1:])
+            elif rng.random() < 0.8:
+                selected_tag = rng.choice(POSE_DATA[d_key][1:])
             
             if selected_tag and selected_tag != "(不指定)":
                 p = extract(selected_tag, "pos")
