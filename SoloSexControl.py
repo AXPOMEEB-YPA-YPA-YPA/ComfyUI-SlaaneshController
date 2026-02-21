@@ -146,7 +146,7 @@ AUTO_DETAILS = {
         "张嘴娇喘": "[moaning, gasping, open mouth]", 
         "张嘴吐舌娇喘": "[moaning, gasping, open mouth, tongue out, uvula]", 
         "o型嘴娇喘": "[:o]", 
-        "o型嘴吐舌娇喘": "[:o，tongue out]", 
+        "o型嘴吐舌娇喘": "[:o, tongue out]",
         "嘟嘴": "[puckered lips, :o]", 
         "栗子嘴": "[chestnut mouth]", 
         "被操傻笑": "[(fucked silly:1.2), open mouth, crazy smile]", 
@@ -176,8 +176,8 @@ AUTO_DETAILS = {
     # --- 9. 眼泪口水 (All Groups) ---
     "FLUIDS_FACE": {
         "眼泪": "[tears, teardrop]",
-        "口水": "[saliva，drooling]", 
-        "眼泪口水": "[tears, teardrop, saliva，drooling]", 
+        "口水": "[saliva, drooling]",
+        "眼泪口水": "[tears, teardrop, saliva, drooling]",
     },
     # --- 10. 性交射精(必须手动) (Group 1 & 4) ---
     "EJAC_SEX": {
