@@ -146,6 +146,7 @@ class SlaaneshSceneControl:
             "required": {
                 "总开关": ("BOOLEAN", {"default": True, "label_on": "节点开启", "label_off": "节点关闭", "display": "toggle"}),
                 "模式选择": (["🔒 手动指定", "🎲 部分随机(手动优先)", "🔓 完全随机"], {"default": "🎲 部分随机(手动优先)"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF, "step": 1}),
                 
                 "地点类型(必选)": (["室内", "室外"], {"default": "室内"}),
                 "风格": (ui_style, {"default": "(不指定)"}),
@@ -166,7 +167,7 @@ class SlaaneshSceneControl:
     def IS_CHANGED(s, **kwargs):
         # 如果不是手动模式，每次都认为是变化的，触发随机
         if kwargs.get("总开关") and kwargs.get("模式选择") != "🔒 手动指定":
-            return float("nan")
+            return int(kwargs.get("seed", 0))
         return False
 
     def slaanesh_scene(self, **kwargs):
@@ -174,6 +175,8 @@ class SlaaneshSceneControl:
             return ("", "")
 
         mode = kwargs.get("模式选择", "🔒 手动指定")
+        seed = int(kwargs.get("seed", 0))
+        rng = random.Random(seed)
         
         pos_parts = []
         neg_parts = []
@@ -202,12 +205,12 @@ class SlaaneshSceneControl:
                     return manual_full
                 else:
                     valid_opts = [x for x in data_pool if x != "(不指定)"]
-                    return random.choice(valid_opts) if valid_opts else "(不指定)"
+                    return rng.choice(valid_opts) if valid_opts else "(不指定)"
             
             # 完全随机：忽略用户选择，完全随机
             else:
                 valid_opts = [x for x in data_pool if x != "(不指定)"]
-                return random.choice(valid_opts) if valid_opts else "(不指定)"
+                return rng.choice(valid_opts) if valid_opts else "(不指定)"
 
         # --- 1. 处理风格 (Style) ---
         style_choice = get_final_choice("风格", SCENE_DATA["style"])
